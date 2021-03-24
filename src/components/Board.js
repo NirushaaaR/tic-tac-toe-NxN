@@ -1,4 +1,6 @@
-import React, { useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
+import { Redirect } from 'react-router';
+import { UserContext } from '../UserProvider';
 import Square from './Square';
 
 const PlayState = {
@@ -15,6 +17,18 @@ const Board = () => {
     const [size, setSize] = useState(3);
     const [board, setBoard] = useState(generateBoard(3));
     const [state, setState] = useState(PlayState.WAITING);
+
+    const user = useContext(UserContext);
+    const [redirect, setredirect] = useState(null);
+
+    useEffect(() => {
+        if (!user) {
+            setredirect("/");
+        }
+    }, [user]);
+    if (redirect) {
+        <Redirect to={redirect} />;
+    }
 
 
     const onSizeChange = (e) => {
@@ -72,7 +86,7 @@ const Board = () => {
                     <input type="number" value={size} onChange={onSizeChange} min={3} />
                 </div>
 
-            ): (
+            ) : (
                 <div className="turn-state">
                     {state}
                 </div>
@@ -85,12 +99,12 @@ const Board = () => {
                     </div>
                 ))}
             </div>
-            
-            {state !== PlayState.PLAYER_TURN && state !== PlayState.BOT_TURN  ? (
+
+            {state !== PlayState.PLAYER_TURN && state !== PlayState.BOT_TURN ? (
                 <button onClick={onClickState}>
                     {state === PlayState.WAITING ? "Click To Start Game" : "Reset"}
                 </button>
-            ): null}
+            ) : null}
         </div>
     )
 }
