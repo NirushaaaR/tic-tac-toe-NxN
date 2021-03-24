@@ -9,10 +9,11 @@ const UserProvider = ({ children }) => {
     useEffect(() => {
         auth.onAuthStateChanged(async (user) => {
             if (user !== null) {
-                const { displayName, email } = user;
+                const { displayName, email, uid } = user;
                 setuser({
                     displayName,
-                    email
+                    email,
+                    uid,
                 });
             }
         })

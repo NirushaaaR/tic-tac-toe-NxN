@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { Redirect } from 'react-router';
+import { db } from '../firebase';
 import { UserContext } from '../UserProvider';
 import Square from './Square';
 
@@ -17,6 +18,7 @@ const Board = () => {
     const [size, setSize] = useState(3);
     const [board, setBoard] = useState(generateBoard(3));
     const [state, setState] = useState(PlayState.WAITING);
+    const [history, setHistory] = useState([]);
 
     const user = useContext(UserContext);
     const [redirect, setredirect] = useState(null);
@@ -49,6 +51,7 @@ const Board = () => {
             case PlayState.BOT_WIN:
             case PlayState.DRAW:
                 // game end
+                setHistory([]);
                 setBoard(generateBoard(size));
                 setState(PlayState.WAITING);
                 break;
@@ -59,21 +62,41 @@ const Board = () => {
 
     const handleClick = (i, j) => {
 
-        if (board[i][j] !== 0) return;
-
+        if (board[i][j] !== 0 || (state !== PlayState.PLAYER_TURN && state !== PlayState.BOT_TURN)) return;
+        const action = [];
         const value = state === PlayState.PLAYER_TURN ? 1 : state === PlayState.BOT_TURN ? -1 : 0;
         const newBoard = [...board];
         newBoard[i][j] = value;
-        const newTurn = nextPlayState(state, newBoard, size);
+        action.push({
+            i, j, 
+            turn: state,
+        });
+        let newTurn = nextPlayState(state, newBoard, size);
 
         if (newTurn === PlayState.BOT_TURN) {
             const [boti, botj] = botPlay(newBoard);
             newBoard[boti][botj] = -1;
-            setState(nextPlayState(newTurn, newBoard, size));
-        } else {
-            setState(newTurn);
+            action.push({
+                i: boti, 
+                j: botj, 
+                turn: newTurn,
+            });
+            newTurn = nextPlayState(newTurn, newBoard, size);     
         }
 
+        if (newTurn === PlayState.BOT_WIN || newTurn === PlayState.PLAYER_WIN || newTurn === PlayState.DRAW) {
+            // game end;
+            // save replay to db
+            db.collection("history").add({
+                history: [...history, ...action],
+                outcome: newTurn,
+                size: size,
+                uid: user.uid,
+            });
+        }
+
+        setHistory([...history, ...action]);
+        setState(newTurn);
         setBoard(newBoard);
     }
 
