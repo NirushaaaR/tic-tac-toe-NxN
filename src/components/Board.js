@@ -29,10 +29,12 @@ const Board = () => {
         switch (state) {
             case PlayState.WAITING:
                 // start a game
+                setBoard(generateBoard(size));
                 setState(PlayState.PLAYER_TURN);
                 break;
             case PlayState.PLAYER_WIN:
             case PlayState.BOT_WIN:
+            case PlayState.DRAW:
                 // game end
                 setState(PlayState.WAITING);
                 break;
@@ -46,10 +48,10 @@ const Board = () => {
         if (board[i][j] !== 0) return;
 
         const value = state === PlayState.PLAYER_TURN ? 1 : state === PlayState.BOT_TURN ? -1 : 0;
-        const newTurn = state === PlayState.PLAYER_TURN ? PlayState.BOT_TURN : state === PlayState.BOT_TURN ? PlayState.PLAYER_TURN : PlayState.WAITING;
         const newBoard = [...board];
         newBoard[i][j] = value;
         setBoard(newBoard);
+        const newTurn = nextPlayState(state, newBoard, size);
         setState(newTurn);
 
     }
@@ -76,15 +78,61 @@ const Board = () => {
 const generateBoard = (size) => {
 
     const board = [];
-    for(let i=0; i< size; i++) {
+    for (let i = 0; i < size; i++) {
         const row = [];
-        for(let j=0; j<size; j++) {
+        for (let j = 0; j < size; j++) {
             row.push(0)
         }
         board.push(row);
     }
 
     return board;
+}
+
+const nextPlayState = (state, board, size) => {
+    // sum up all horizontal, vertical Diagonal 
+    // if we can sum it to size than player win
+    // if we can sum it to -size than bot win
+    
+    // checking if zero exists if not than all square has been place and will draw.
+    let zeroExists = false;
+
+    // horizontal & vertical & Diagonal
+    let sumDiagonalLeft = 0;
+    let sumDiagonalRight = 0;
+    for (let i = 0; i < size; i++) {
+        let sumHorizontal = 0;
+        let sumVertical = 0;
+        sumDiagonalLeft += board[i][i];
+        sumDiagonalRight += board[i][size-i-1];
+        for (let j = 0; j < size; j++) {
+            sumHorizontal += board[i][j];
+            sumVertical += board[j][i];
+
+            zeroExists = zeroExists || board[i][j] === 0;
+        }
+        if (sumHorizontal === size || sumVertical === size) {
+            return PlayState.PLAYER_WIN;
+        } else if (sumHorizontal === -size || sumVertical === -size) {
+            return PlayState.BOT_WIN;
+        }
+    }
+
+    // Diagonal check
+    if (sumDiagonalLeft === size || sumDiagonalRight === size) {
+        return PlayState.PLAYER_WIN;
+    } else if (sumDiagonalLeft === -size || sumDiagonalRight === -size) {
+        return PlayState.BOT_WIN;
+    }
+
+    // Draw
+    if (!zeroExists) {
+        return PlayState.DRAW;
+    }
+
+    // change turn
+    return state === PlayState.PLAYER_TURN ? PlayState.BOT_TURN : state === PlayState.BOT_TURN ? PlayState.PLAYER_TURN : PlayState.WAITING;
+
 }
 
 export default Board
