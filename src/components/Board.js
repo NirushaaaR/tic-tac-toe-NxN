@@ -66,8 +66,17 @@ const Board = () => {
 
     return (
         <div>
-            <label>Choose Size: </label>
-            <input type="number" value={size} onChange={onSizeChange} min={3} />
+            {state === PlayState.WAITING ? (
+                <div>
+                    <label>Choose Size: </label>
+                    <input type="number" value={size} onChange={onSizeChange} min={3} />
+                </div>
+
+            ): (
+                <div className="turn-state">
+                    {state}
+                </div>
+            )}
 
             <div>
                 {board.map((row, i) => (
@@ -76,8 +85,12 @@ const Board = () => {
                     </div>
                 ))}
             </div>
-
-            <button onClick={onClickState} disabled={state === PlayState.PLAYER_TURN || state === PlayState.BOT_TURN}>{state}</button>
+            
+            {state !== PlayState.PLAYER_TURN && state !== PlayState.BOT_TURN  ? (
+                <button onClick={onClickState}>
+                    {state === PlayState.WAITING ? "Click To Start Game" : "Reset"}
+                </button>
+            ): null}
         </div>
     )
 }
