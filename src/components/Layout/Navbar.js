@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { Link } from 'react-router-dom'
-import { logOut } from '../../firebase';
+import { logOut } from '../../service/firebase';
 import { UserContext } from '../../UserProvider';
 
 const Navbar = () => {

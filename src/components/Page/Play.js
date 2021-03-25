@@ -1,29 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { Redirect } from 'react-router';
-import { db, getServerTimeStamp } from '../../firebase';
+import { getUserStat, saveReplay, updateUserStat } from '../../service/api';
 import { UserContext } from '../../UserProvider';
 import Board from '../Board/Board';
-import PlayerStat from '../PlayerStat';
+import PlayerStat from '../Layout/PlayerStat';
 
-export const PlayState = {
+const PlayState = {
     WAITING: "WAITING TO START",
     PLAYER_TURN: "PLAYER Turn",
     BOT_TURN: "BOT Turn",
     PLAYER_WIN: "PLAYER WIN!!",
     BOT_WIN: "BOT WIN!!",
     DRAW: "DRAW!!",
-}
-
-const getUserStat = (user, setStat) => {
-    db.collection("userstat").doc(user.uid).get()
-        .then((res) => {
-            if (!res.exists) {
-                // create new
-                db.collection("userstat").doc(user.uid).set({ win: 0, lose: 0 });
-            } else {
-                setStat(res.data());
-            }
-        })
 }
 
 const Page = () => {
@@ -183,14 +171,7 @@ const Page = () => {
 
         if (newState === PlayState.BOT_WIN || newState === PlayState.PLAYER_WIN || newState === PlayState.DRAW) {
             // game end;
-            // save replay to db
-            db.collection("history").add({
-                history: [...history, ...action],
-                outcome: newState,
-                size: size,
-                uid: user.uid,
-                time: getServerTimeStamp(),
-            });
+            saveReplay([...history, ...action], newState, size, user.uid);
 
             const newStat = { ...stat };
             if (newState === PlayState.PLAYER_WIN) {
@@ -201,7 +182,7 @@ const Page = () => {
                 setStat(newStat);
             }
             // update stat
-            db.collection("userstat").doc(user.uid).set(newStat);
+            updateUserStat(user.uid, newStat);
 
             setState(newState);
             setBoard(newBoard);

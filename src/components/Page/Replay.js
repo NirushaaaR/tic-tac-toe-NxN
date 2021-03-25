@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { Redirect } from 'react-router';
-import { db } from '../../firebase';
+import { getHistory } from '../../service/api';
 import { UserContext } from '../../UserProvider';
 import Board from '../Board/Board';
 import { generateBoard } from './Play';
@@ -10,6 +10,7 @@ const Replay = () => {
 
     const user = useContext(UserContext);
     const [redirect, setredirect] = useState(null);
+
     const [replay, setReplay] = useState([]);
     const [replayBoard, setReplayBoard] = useState(null);
     const [replayMoves, setReplayMoves] = useState([]);
@@ -19,18 +20,7 @@ const Replay = () => {
         if (!user) {
             setredirect("/");
         } else {
-            db.collection("history")
-                .where("uid", "==", user.uid)
-                .orderBy("time")
-                .get()
-                .then(querySnapshot => {
-                    const allReplay = [];
-                    querySnapshot.forEach(doc => {
-                        allReplay.push(doc.data());
-                    });
-                    setReplay(allReplay);
-                })
-                .catch(error => alert(error.message));
+            getHistory(user, setReplay)
         }
     }, [user]);
     if (redirect) {
@@ -38,19 +28,21 @@ const Replay = () => {
     }
 
     const chooseReplay = (i) => {
-        const chosenReplay = replay[i];
-        const board = generateBoard(chosenReplay.size);
-        board[chosenReplay.history[0].i][chosenReplay.history[0].j] = chosenReplay.history[0].value;
+        const history = replay[i].history;
+        console.log(history);
+        const board = generateBoard(replay[i].size);
+        board[history[0].i][history[0].j] = history[0].value;
+
         setReplayBoard(board);
-        setReplayMoves(chosenReplay.history);
-        setCurrentState(chosenReplay.history[0].turn);
+        setReplayMoves(history);
+        setCurrentState(history[0].turn);
     }
 
     const chooseMoves = (i) => {
         const board = replayBoard.map(row => row.map(r => 0));
         // recreate board
-        for (let j = 0; j <= i; j++) {
-            board[replayMoves[j].i][replayMoves[j].j] = replayMoves[j].value;
+        for (let index = 0; index <= i; index++) {
+            board[replayMoves[index].i][replayMoves[index].j] = replayMoves[index].value;
         }
 
         setReplayBoard(board);

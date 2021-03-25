@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { signInWithGoogle } from '../../firebase';
+import { signInWithGoogle } from '../../service/firebase';
 import { UserContext } from '../../UserProvider';
 import { Redirect } from 'react-router-dom';
 
