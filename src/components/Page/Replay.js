@@ -11,7 +11,7 @@ const Replay = () => {
     const [redirect, setredirect] = useState(null);
 
     const [replay, setReplay] = useState([]);
-    const [gameText, setGameText] = useState(""); 
+    const [gameText, setGameText] = useState("");
     const [replayBoard, setReplayBoard] = useState(null);
     const [replayMoves, setReplayMoves] = useState([]);
     const [currentState, setCurrentState] = useState("");
@@ -49,11 +49,14 @@ const Replay = () => {
         }
 
         // if lastest moves show who win
-        if (i === replayMoves.length-1) {
+        if (i === replayMoves.length - 1) {
             const winningSquare = checkWinner(board.length, board)[1];
             setWinningSquare(winningSquare);
+        } 
+        else {
+            setWinningSquare([]);
         }
-        
+
         setReplayBoard(board);
         setCurrentState(replayMoves[i].turn);
     }
