@@ -14,6 +14,18 @@ export const PlayState = {
     DRAW: "DRAW!!",
 }
 
+const getUserStat = (user, setStat) => {
+    db.collection("userstat").doc(user.uid).get()
+        .then((res) => {
+            if (!res.exists) {
+                // create new
+                db.collection("userstat").doc(user.uid).set({ win: 0, lose: 0 });
+            } else {
+                setStat(res.data());
+            }
+        })
+}
+
 const Page = () => {
 
     const [size, setSize] = useState(3);
@@ -23,18 +35,6 @@ const Page = () => {
     const [winningSquare, setWinningSquare] = useState([]);
     const [stat, setStat] = useState({ win: 0, lose: 0 });
 
-    const getUserStat = () => {
-        db.collection("userstat").doc(user.uid).get()
-            .then((res) => {
-                if (!res.exists) {
-                    // create new
-                    db.collection("userstat").doc(user.uid).set(stat);
-                } else {
-                    setStat(res.data());
-                }
-            })
-    }
-
     const user = useContext(UserContext);
     const [redirect, setredirect] = useState(null);
 
@@ -42,7 +42,7 @@ const Page = () => {
         if (!user) {
             setredirect("/");
         } else {
-            getUserStat();
+            getUserStat(user, setStat);
         }
     }, [user]);
 
