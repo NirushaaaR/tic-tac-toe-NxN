@@ -28,6 +28,7 @@ const Page = () => {
             setredirect("/");
         }
     }, [user]);
+
     if (redirect) {
         <Redirect to={redirect} />;
     }
@@ -45,7 +46,15 @@ const Page = () => {
         switch (state) {
             case PlayState.WAITING:
                 // start a game
-                setState(PlayState.PLAYER_TURN);
+                const fisrtTurn = Math.random() > 0.5 ? PlayState.PLAYER_TURN : PlayState.BOT_TURN;
+                
+                // bot go first
+                if (fisrtTurn === PlayState.BOT_TURN) {
+                    const action = botFlow(board, fisrtTurn)[1];
+                    setHistory([action]);
+                } 
+                else setState(fisrtTurn);
+
                 break;
             case PlayState.PLAYER_WIN:
             case PlayState.BOT_WIN:
@@ -60,9 +69,30 @@ const Page = () => {
         }
     }
 
+    const botFlow = (board, state) => {
+
+        const newBoard = [...board];
+        
+        // bot play
+        const [boti, botj] = botPlay(newBoard);
+        newBoard[boti][botj] = -1;
+
+        const nextState = nextPlayState(state, newBoard, size);
+        
+        setBoard(newBoard);
+        setState(nextState);
+
+        return [nextState, {
+            i: boti, 
+            j: botj, 
+            turn: state,
+        }];
+    }
+
     const handleClick = (i, j) => {
 
         if (board[i][j] !== 0 || (state !== PlayState.PLAYER_TURN && state !== PlayState.BOT_TURN)) return;
+
         const action = [];
         const value = state === PlayState.PLAYER_TURN ? 1 : state === PlayState.BOT_TURN ? -1 : 0;
         const newBoard = [...board];
@@ -71,33 +101,30 @@ const Page = () => {
             i, j, 
             turn: state,
         });
-        let newTurn = nextPlayState(state, newBoard, size);
+        let newState = nextPlayState(state, newBoard, size);
 
-        if (newTurn === PlayState.BOT_TURN) {
-            const [boti, botj] = botPlay(newBoard);
-            newBoard[boti][botj] = -1;
-            action.push({
-                i: boti, 
-                j: botj, 
-                turn: newTurn,
-            });
-            newTurn = nextPlayState(newTurn, newBoard, size);     
+        if (newState === PlayState.BOT_TURN) {
+            const [nextState, botAction] = botFlow(newBoard, newState);
+            action.push(botAction);
+            newState = nextState;   
         }
-
-        if (newTurn === PlayState.BOT_WIN || newTurn === PlayState.PLAYER_WIN || newTurn === PlayState.DRAW) {
+        
+        if (newState === PlayState.BOT_WIN || newState === PlayState.PLAYER_WIN || newState === PlayState.DRAW) {
             // game end;
             // save replay to db
             db.collection("history").add({
                 history: [...history, ...action],
-                outcome: newTurn,
+                outcome: newState,
                 size: size,
                 uid: user.uid,
             });
+
+            setState(newState);
+            setBoard(newBoard);
         }
 
         setHistory([...history, ...action]);
-        setState(newTurn);
-        setBoard(newBoard);
+        
     }
 
 
