@@ -1,6 +1,6 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { signInWithGoogle } from '../firebase';
-import { UserContext } from '../UserProvider';
+import { signInWithGoogle } from '../../firebase';
+import { UserContext } from '../../UserProvider';
 import { Redirect } from 'react-router-dom';
 
 
@@ -10,7 +10,7 @@ const Login =  () => {
 
     useEffect(() => {
         if (user) {
-            setredirect('/board/')
+            setredirect('/play/')
         }
     }, [user]);
 

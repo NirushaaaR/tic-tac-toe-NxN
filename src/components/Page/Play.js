@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { Redirect } from 'react-router';
-import { db } from '../firebase';
-import { UserContext } from '../UserProvider';
-import Square from './Square';
+import { db } from '../../firebase';
+import { UserContext } from '../../UserProvider';
+import Board from '../Board/Board';
 
 const PlayState = {
-    WAITING: "Click To Start",
+    WAITING: "WAITING TO START",
     PLAYER_TURN: "PLAYER Turn",
     BOT_TURN: "BOT Turn",
     PLAYER_WIN: "PLAYER WIN!!",
@@ -13,7 +13,7 @@ const PlayState = {
     DRAW: "DRAW!!",
 }
 
-const Board = () => {
+const Page = () => {
 
     const [size, setSize] = useState(3);
     const [board, setBoard] = useState(generateBoard(3));
@@ -106,7 +106,7 @@ const Board = () => {
             {state === PlayState.WAITING ? (
                 <div>
                     <label>Choose Size: </label>
-                    <input type="number" value={size} onChange={onSizeChange} min={3} />
+                    <input type="number" value={size} onChange={onSizeChange} min={1} />
                 </div>
 
             ) : (
@@ -115,13 +115,7 @@ const Board = () => {
                 </div>
             )}
 
-            <div>
-                {board.map((row, i) => (
-                    <div className="board-row" key={i}>
-                        {row.map((square, j) => <Square key={i + j} value={square} handleClick={() => handleClick(i, j)} />)}
-                    </div>
-                ))}
-            </div>
+           <Board board={board} handleClick={handleClick}/>
 
             {state !== PlayState.PLAYER_TURN && state !== PlayState.BOT_TURN ? (
                 <button onClick={onClickState}>
@@ -209,4 +203,4 @@ const botPlay = (board) => {
     return zeros[Math.floor((Math.random() * zeros.length))]
 }
 
-export default Board
+export default Page;
