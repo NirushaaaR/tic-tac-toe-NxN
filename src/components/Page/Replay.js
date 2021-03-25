@@ -2,9 +2,8 @@ import React, { useContext, useEffect, useState } from 'react'
 import { Redirect } from 'react-router';
 import { getHistory } from '../../service/api';
 import { UserContext } from '../../UserProvider';
+import { checkWinner, generateBoard } from '../../utils/board';
 import Board from '../Board/Board';
-import { generateBoard } from './Play';
-// import {generateBoard} from '../Page/Play';
 
 const Replay = () => {
 
@@ -12,9 +11,11 @@ const Replay = () => {
     const [redirect, setredirect] = useState(null);
 
     const [replay, setReplay] = useState([]);
+    const [gameText, setGameText] = useState(""); 
     const [replayBoard, setReplayBoard] = useState(null);
     const [replayMoves, setReplayMoves] = useState([]);
     const [currentState, setCurrentState] = useState("");
+    const [winningSquare, setWinningSquare] = useState([]);
 
     useEffect(() => {
         if (!user) {
@@ -36,6 +37,8 @@ const Replay = () => {
         setReplayBoard(board);
         setReplayMoves(history);
         setCurrentState(history[0].turn);
+        setWinningSquare([]);
+        setGameText(`Game ${i + 1} ${replay[i].outcome}`)
     }
 
     const chooseMoves = (i) => {
@@ -45,6 +48,12 @@ const Replay = () => {
             board[replayMoves[index].i][replayMoves[index].j] = replayMoves[index].value;
         }
 
+        // if lastest moves show who win
+        if (i === replayMoves.length-1) {
+            const winningSquare = checkWinner(board.length, board)[1];
+            setWinningSquare(winningSquare);
+        }
+        
         setReplayBoard(board);
         setCurrentState(replayMoves[i].turn);
     }
@@ -67,7 +76,10 @@ const Replay = () => {
                 </div>
 
                 <div className="col-md-9">
-                    {replayBoard && <Board board={replayBoard} handleClick={() => { }} highlightSquare={[]} />}
+
+                    <h2>{gameText}</h2>
+
+                    {replayBoard && <Board board={replayBoard} handleClick={() => { }} highlightSquare={winningSquare} />}
 
                     <h3 className="play-state my-2">
                         {currentState}

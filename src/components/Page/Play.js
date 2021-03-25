@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { Redirect } from 'react-router';
 import { getUserStat, saveReplay, updateUserStat } from '../../service/api';
 import { UserContext } from '../../UserProvider';
+import { checkWinner, generateBoard } from '../../utils/board';
 import Board from '../Board/Board';
 import PlayerStat from '../Layout/PlayerStat';
 
@@ -38,7 +39,6 @@ const Page = () => {
         return <Redirect to={redirect} />;
     }
 
-
     const onSizeChange = (e) => {
         if (state === PlayState.WAITING) {
             const newSize = Number(e.target.value);
@@ -48,87 +48,26 @@ const Page = () => {
     }
 
     const nextPlayState = (state, board, size) => {
-        let zeroExists = false;
+        
+        const winner = checkWinner(size, board);
 
-        const checkArray = [];
-        // horizontal & vertical & Diagonal
-        const diagonalLeft = [];
-        const diagonalRight = [];
-        for (let i = 0; i < size; i++) {
-            const horizontal = [];
-            const vertical = [];
-            diagonalLeft.push([i, i])
-            diagonalRight.push([i, size - i - 1]);
-
-            for (let j = 0; j < size; j++) {
-                horizontal.push([i, j]);
-                vertical.push([j, i]);
-                zeroExists = zeroExists || board[i][j] === 0;
-            }
-            checkArray.push(horizontal);
-            checkArray.push(vertical);
+        if (!winner) {
+            // change turn
+            return state === PlayState.PLAYER_TURN
+                ? PlayState.BOT_TURN
+                : state === PlayState.BOT_TURN
+                    ? PlayState.PLAYER_TURN
+                    : PlayState.WAITING;
+        } else {
+            setWinningSquare(winner[1]);
+            if (winner[0] === 0) return PlayState.DRAW;
+            if (winner[0] === 1) return PlayState.PLAYER_WIN;
+            if (winner[0] === -1) return PlayState.BOT_WIN;
         }
-
-        // Diagonal check
-        checkArray.push(diagonalLeft);
-        checkArray.push(diagonalRight);
-
-        // check if player win
-        const playerWin = checkArray.filter((check) => check.every(([i, j]) => board[i][j] === 1));
-        if (playerWin.length > 0) {
-            setWinningSquare(playerWin[0]);
-            return PlayState.PLAYER_WIN;
-        }
-
-        const enemyWin = checkArray.filter((check) => check.every(([i, j]) => board[i][j] === -1));
-        if (enemyWin.length > 0) {
-            setWinningSquare(enemyWin[0]);
-            return PlayState.BOT_WIN;
-        }
-
-        // Draw
-        if (!zeroExists) {
-            return PlayState.DRAW;
-        }
-
-        // change turn
-        return state === PlayState.PLAYER_TURN
-            ? PlayState.BOT_TURN
-            : state === PlayState.BOT_TURN
-                ? PlayState.PLAYER_TURN
-                : PlayState.WAITING;
 
     }
 
-    const onClickState = () => {
-        switch (state) {
-            case PlayState.WAITING:
-                // start a game
-                const fisrtTurn = Math.random() > 0.5 ? PlayState.PLAYER_TURN : PlayState.BOT_TURN;
-
-                // bot go first
-                if (fisrtTurn === PlayState.BOT_TURN) {
-                    const action = botFlow(board, fisrtTurn)[1];
-                    setHistory([action]);
-                }
-                else setState(fisrtTurn);
-
-                break;
-            case PlayState.PLAYER_WIN:
-            case PlayState.BOT_WIN:
-            case PlayState.DRAW:
-                // Reset game
-                setHistory([]);
-                setWinningSquare([]);
-                setBoard(generateBoard(size));
-                setState(PlayState.WAITING);
-                break;
-            default:
-                break;
-        }
-    }
-
-    const botFlow = (board, state) => {
+    const botTurn = (board, state) => {
 
         const newBoard = [...board];
 
@@ -149,12 +88,65 @@ const Page = () => {
         }];
     }
 
-    const handleClick = (i, j) => {
+    const gameStart = () => {
+        // start a with random first turn
+        const fisrtTurn = Math.random() > 0.5 ? PlayState.PLAYER_TURN : PlayState.BOT_TURN;
+
+        // bot go first
+        if (fisrtTurn === PlayState.BOT_TURN) {
+            const action = botTurn(board, fisrtTurn)[1];
+            setHistory([action]);
+        }
+        else setState(fisrtTurn);
+    }
+
+    const gameEnd = (history, winState, newBoard) => {
+        // game end;
+        saveReplay(history, winState, size, user.uid);
+
+        const newStat = { ...stat };
+        if (winState === PlayState.PLAYER_WIN) {
+            newStat.win += 1;
+            setStat(newStat);
+        } else if (winState === PlayState.BOT_WIN) {
+            newStat.lose += 1;
+            setStat(newStat);
+        }
+        // update stat
+        updateUserStat(user.uid, newStat);
+        setState(winState);
+        setBoard(newBoard);
+    }
+
+    const gameReset = () => {
+        // Reset game
+        setHistory([]);
+        setWinningSquare([]);
+        setBoard(generateBoard(size));
+        setState(PlayState.WAITING);
+    }
+
+    const onClickStartOrReset = () => {
+        switch (state) {
+            case PlayState.WAITING:
+                gameStart();
+                break;
+            case PlayState.PLAYER_WIN:
+            case PlayState.BOT_WIN:
+            case PlayState.DRAW:
+                gameReset();
+                break;
+            default:
+                break;
+        }
+    }
+
+    const handleClickSquare = (i, j) => {
 
         if (board[i][j] !== 0 || (state !== PlayState.PLAYER_TURN && state !== PlayState.BOT_TURN)) return;
 
         const action = [];
-        const value = state === PlayState.PLAYER_TURN ? 1 : state === PlayState.BOT_TURN ? -1 : 0;
+        const value = 1;
         const newBoard = [...board];
         newBoard[i][j] = value;
         action.push({
@@ -163,40 +155,24 @@ const Page = () => {
         });
         let newState = nextPlayState(state, newBoard, size);
 
+        // operate bot turn
         if (newState === PlayState.BOT_TURN) {
-            const [nextState, botAction] = botFlow(newBoard, newState);
+            const [nextState, botAction] = botTurn(newBoard, newState);
             action.push(botAction);
             newState = nextState;
         }
 
         if (newState === PlayState.BOT_WIN || newState === PlayState.PLAYER_WIN || newState === PlayState.DRAW) {
-            // game end;
-            saveReplay([...history, ...action], newState, size, user.uid);
-
-            const newStat = { ...stat };
-            if (newState === PlayState.PLAYER_WIN) {
-                newStat.win += 1;
-                setStat(newStat);
-            } else if (newState === PlayState.BOT_WIN) {
-                newStat.lose += 1;
-                setStat(newStat);
-            }
-            // update stat
-            updateUserStat(user.uid, newStat);
-
-            setState(newState);
-            setBoard(newBoard);
+            gameEnd([...history, ...action], newState, newBoard);
+        } else {
+            setHistory([...history, ...action]);
         }
-
-        setHistory([...history, ...action]);
-
     }
-
 
     return (
         <div>
             {state === PlayState.WAITING ? (
-                <div>
+                <div className="choose-size">
                     <label>Choose Size: </label>
                     <input type="number" value={size} onChange={onSizeChange} min={1} />
                 </div>
@@ -208,30 +184,16 @@ const Page = () => {
             )}
 
             {state !== PlayState.PLAYER_TURN && state !== PlayState.BOT_TURN ? (
-                <button onClick={onClickState} className="btn btn-primary my-2">
+                <button onClick={onClickStartOrReset} className="btn btn-primary my-2">
                     {state === PlayState.WAITING ? "Click To Start Game" : "Reset"}
                 </button>
             ) : null}
 
-            <Board board={board} handleClick={handleClick} highlightSquare={winningSquare} />
+            <Board board={board} handleClick={handleClickSquare} highlightSquare={winningSquare} />
 
             {user ? <PlayerStat displayName={user.displayName} win={stat.win} lose={stat.lose} /> : null}
         </div>
     )
-}
-
-export const generateBoard = (size) => {
-
-    const board = [];
-    for (let i = 0; i < size; i++) {
-        const row = [];
-        for (let j = 0; j < size; j++) {
-            row.push(0)
-        }
-        board.push(row);
-    }
-
-    return board;
 }
 
 const botPlay = (board) => {
