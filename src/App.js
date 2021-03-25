@@ -4,19 +4,21 @@ import Play from './components/Page/Play';
 import UserProvider from './UserProvider';
 import Login from './components/Page/Login';
 import Replay from './components/Page/Replay';
+import Navbar from './components/Layout/Navbar';
 
 function App() {
   return (
     <UserProvider>
-      <div className="App">
-        <Router>
+      <Router>
+        <Navbar />
+        <div className="App">
           <Switch>
-            <Route exact path="/" component={Login}/>
-            <Route exact path="/play" component={Play}/>
+            <Route exact path="/" component={Login} />
+            <Route exact path="/play" component={Play} />
             <Route exact path="/replay" component={Replay} />
           </Switch>
-        </Router>
-      </div>
+        </div>
+      </Router>
     </UserProvider>
   );
 }

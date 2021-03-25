@@ -2,19 +2,20 @@ import React, { useState, useEffect, createContext } from "react";
 import { auth } from "./firebase"
 
 
-export const UserContext = createContext({ user: null })
+export const UserContext = createContext({})
 
 const UserProvider = ({ children }) => {
-    const [user, setuser] = useState(null)
+    const [user, setuser] = useState(null);
     useEffect(() => {
         auth.onAuthStateChanged(async (user) => {
             if (user !== null) {
-                const { displayName, email, uid } = user;
+                const { displayName, uid } = user;
                 setuser({
                     displayName,
-                    email,
                     uid,
                 });
+            } else {
+                setuser(null);
             }
         })
     }, [])

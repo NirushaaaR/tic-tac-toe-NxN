@@ -27,7 +27,7 @@ const Replay = () => {
         }
     }, [user]);
     if (redirect) {
-        <Redirect to={redirect} />;
+        return <Redirect to={redirect} />;
     }
 
     return (
