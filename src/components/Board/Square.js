@@ -1,9 +1,13 @@
 import React from 'react'
 import PropTypes from 'prop-types';
 
-const Square = ({ value, handleClick }) => {
+const Square = ({ value, handleClick, highlight }) => {
     return (
-        <button className="square" onClick={handleClick} style={value === 0 ? blankStyle : nonBlankStyle} disabled={value !== 0}>
+        <button
+            className="square"
+            onClick={handleClick}
+            style={value === 0 ? blankStyle : highlight ? hightLightStyle : nonBlankStyle}
+        >
             {value === 1 ? "X" : "O"}
         </button>
     )
@@ -12,6 +16,7 @@ const Square = ({ value, handleClick }) => {
 Square.propTypes = {
     value: PropTypes.number.isRequired,
     handleClick: PropTypes.func.isRequired,
+    highlight: PropTypes.bool.isRequired,
 }
 
 const blankStyle = {
@@ -21,6 +26,11 @@ const blankStyle = {
 
 const nonBlankStyle = {
     color: "black",
+    background: "white",
+}
+
+const hightLightStyle = {
+    color: "red",
 }
 
 export default Square;
