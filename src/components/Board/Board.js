@@ -9,7 +9,7 @@ const Board = ({ board, handleClick, highlightSquare }) => {
                 <div className="board-row" key={i}>
                     {row.map((square, j) =>
                         <Square
-                            key={i + j}
+                            key={`${i}${j}`}
                             value={square}
                             handleClick={() => handleClick(i, j)}
                             highlight={highlightSquare.some(v => v[0] === i && v[1] === j)}

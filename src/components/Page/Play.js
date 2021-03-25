@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { Redirect } from 'react-router';
-import { db } from '../../firebase';
+import { db, getServerTimeStamp } from '../../firebase';
 import { UserContext } from '../../UserProvider';
 import Board from '../Board/Board';
 import PlayerStat from '../PlayerStat';
 
-const PlayState = {
+export const PlayState = {
     WAITING: "WAITING TO START",
     PLAYER_TURN: "PLAYER Turn",
     BOT_TURN: "BOT Turn",
@@ -156,6 +156,7 @@ const Page = () => {
         return [nextState, {
             i: boti,
             j: botj,
+            value: -1,
             turn: state,
         }];
     }
@@ -169,7 +170,7 @@ const Page = () => {
         const newBoard = [...board];
         newBoard[i][j] = value;
         action.push({
-            i, j,
+            i, j, value,
             turn: state,
         });
         let newState = nextPlayState(state, newBoard, size);
@@ -188,6 +189,7 @@ const Page = () => {
                 outcome: newState,
                 size: size,
                 uid: user.uid,
+                time: getServerTimeStamp(),
             });
 
             const newStat = { ...stat };
@@ -224,20 +226,20 @@ const Page = () => {
                 </div>
             )}
 
-            <Board board={board} handleClick={handleClick} highlightSquare={winningSquare} />
-
             {state !== PlayState.PLAYER_TURN && state !== PlayState.BOT_TURN ? (
-                <button onClick={onClickState}>
+                <button onClick={onClickState} className="btn btn-primary my-2">
                     {state === PlayState.WAITING ? "Click To Start Game" : "Reset"}
                 </button>
             ) : null}
+
+            <Board board={board} handleClick={handleClick} highlightSquare={winningSquare} />
 
             {user ? <PlayerStat displayName={user.displayName} win={stat.win} lose={stat.lose} /> : null}
         </div>
     )
 }
 
-const generateBoard = (size) => {
+export const generateBoard = (size) => {
 
     const board = [];
     for (let i = 0; i < size; i++) {

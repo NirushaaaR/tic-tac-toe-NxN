@@ -32,3 +32,5 @@ export const logOut = () => {
     console.log(error.message)
   })
 }
+
+export const getServerTimeStamp = () => firebase.firestore.FieldValue.serverTimestamp();

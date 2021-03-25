@@ -10,11 +10,12 @@ const Navbar = () => {
     return (
         <nav className="navbar navbar-light bg-light">
             <div className="container">
-                <Link className="navbar-brand nav-link" to="/play/">Play</Link>
+                <h1 className="navbar-brand">Tic Tac Toe</h1>
                 {user && (
                     <div className="d-flex">
+                        <Link className="nav-link" to="/play/">Play</Link>
                         <Link className="nav-link" to="/replay/">Watch Replay</Link>
-                        <button className="btn btn-outline-success me-2" onClick={logOut}>Logout</button>
+                        <button className="btn btn-outline-danger me-2" onClick={logOut}>Logout</button>
                     </div>
                 )}
             </div>
