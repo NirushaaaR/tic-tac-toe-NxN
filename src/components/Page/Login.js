@@ -19,11 +19,11 @@ const Login = () => {
     }
 
     return (
-        <div>
+        <div className="login">
             <h1>Tic Tac Toe Game!!!</h1>
             <div className="login-buttons mt-3">
-                <button className="login-provider-button" onClick={signInWithGoogle}>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/google-logo.png" alt="google icon" />
+                <button className="btn btn-light border border-dark" onClick={signInWithGoogle}>
+                    <img src="https://cdn.icon-icons.com/icons2/2119/PNG/512/google_icon_131222.png" alt="google icon" style={{width: "25px", height: "25px"}}/>
                     <span> Continue with Google</span>
                 </button>
             </div>
